@@ -1,103 +1,148 @@
-# 🔗 URL Shortener
+URL Shortener Service
+Overview
+This repository implements a simple URL shortening service similar to Bitly or TinyURL. The service provides endpoints to shorten URLs, redirect via short codes, view analytics, and check service health.
+Built with Flask, entirely in-memory, with thread-safe operations and comprehensive tests.
 
-A simple and efficient URL Shortener built with **Node.js**, **Express.js**, and **MongoDB**. This application allows users to convert long URLs into short, shareable links and redirect them back to the original link.
+Features
+Shorten URLs: Generates unique 6-character alphanumeric codes.
 
-## 🚀 Features
+Redirect Service: Resolves short codes with correct click counting.
 
-- 🔒 Generate unique short URLs
-- 📥 Store original URLs in MongoDB
-- 🔁 Redirect short URLs to the original link
-- 🧾 API-based architecture for easy integration
-- 📊 Click count tracking *(optional enhancement)*
+Analytics: View click count, timestamps, and source URL.
 
-## 🛠️ Tech Stack
+URL Validation: Robust validation to ensure only correct URLs are shortened.
 
-- **Backend:** Node.js, Express.js
-- **Database:** MongoDB (with Mongoose ODM)
-- **Environment Management:** dotenv
-- **Other Dependencies:** nanoid, cors, body-parser
+Thread-Safe: Protects storage and counters for concurrent requests.
 
-## 📂 Project Structure
+Health Check Endpoint: Basic O.K. check for service monitoring.
 
-Url-Shortner/
-├── models/
-│ └── Url.js # Mongoose model for URL schema
-├── routes/
-│ └── url.js # API routes for shortening and redirecting
-├── .env # Environment variables
-├── server.js # Main server file
-├── package.json
-└── README.md # Project documentation
+Comprehensive Testing: Multiple Pytest test cases, covering success, errors, and edge cases.
 
+Setup
+Prerequisites
+Python 3.8+
+
+pip
+
+Installation and Launch
 bash
-Copy
-Edit
+# Clone/download this repository
+cd url-shortener
 
-## ⚙️ Setup Instructions
+# Install dependencies
+pip install -r requirements.txt
 
-### 1. Clone the Repository
+# Start the application
+python -m flask --app app.main run
 
-```bash
-git clone https://github.com/kunal141206/Url-Shortner.git
-cd Url-Shortner
-2. Install Dependencies
-bash
-Copy
-Edit
-npm install
-3. Configure Environment Variables
-Create a .env file in the root directory and add:
+# The API will be available at http://localhost:5000
 
-env
-Copy
-Edit
-PORT=5000
-MONGODB_URI=your_mongodb_connection_string
-BASE_URL=http://localhost:5000
-4. Run the Application
-bash
-Copy
-Edit
-npm start
-Server will be running at http://localhost:5000.
+# Run tests
+pytest
+API Endpoints
+# 1. Shorten URL
+POST /api/shorten
 
-📡 API Endpoints
-POST /api/url/shorten
-Description: Create a short URL.
-
-Request Body:
+Body:
 
 json
-Copy
-Edit
+{ "url": "https://www.example.com/very/long/url" }
+Success Response:
+
+json
 {
-  "longUrl": "https://www.example.com/very/long/url"
+  "short_code": "abc123",
+  "short_url": "http://localhost:5000/abc123"
 }
+Errors:
+
+400: Invalid or missing URL
+
+415: Incorrect Content-Type
+
+# 2. Redirect
+GET /<short_code>
+
+Description: Redirects to original URL and increments click count.
+
+On Success: HTTP 302 redirect to the long URL
+
+Errors: 404 if code is not found
+
+# 3. Get Analytics
+GET /api/stats/<short_code>
+
+Description: Returns analytics for a short code.
+
+Success Response:
+
+json
+{
+  "url": "https://www.example.com/very/long/url",
+  "clicks": 5,
+  "created_at": "2024-01-01T10:00:00"
+}
+Errors: 404 if not found
+
+# 4. Health Check
+GET /health
+
 Response:
 
 json
-Copy
-Edit
-{
-  "shortUrl": "http://localhost:5000/xyz123"
-}
-GET /:shortCode
-Description: Redirects to the original URL based on the short code.
+{ "status": "OK" }
+File Structure
+text
+url-shortener/
+│
+├── app/
+│   ├── main.py     # Application entrypoint
+│   ├── models.py   # Data structures (if used)
+│   ├── storage.py  # In-memory storage and thread-safe operations
+│   ├── utils.py    # Helper functions (e.g., validation, short-code generation)
+│   ├── blueprints/ # (Optional) Flask blueprints for route grouping
+│   └── ...         # (Other modules as necessary)
+├── tests/
+│   ├── test_endpoints.py  # API endpoint tests, inc. error and concurrency
+│   └── ...                # More test files as required
+├── requirements.txt # Python dependencies
+├── README.md        # (this file)
+└── NOTES.md         # AI use documentation (if applicable)
+# Example Usage
+Shorten a URL
+bash
+curl -X POST http://localhost:5000/api/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.example.com/very/long/url"}'
+Redirect
+bash
+curl -L http://localhost:5000/abc123
+Get Analytics
+bash
+curl http://localhost:5000/api/stats/abc123
+Health Check
+bash
+curl http://localhost:5000/health
+Testing
+To run the full test suite:
 
-Example:
-Visit http://localhost:5000/xyz123 → redirects to the original long URL.
+bash
+pytest -v
+Tests cover:
 
-🧠 Future Enhancements
-Add a frontend UI with analytics dashboard
+Valid/invalid shortening requests
 
-Track click counts and user geolocation
+Redirections (including error on missing code)
 
-Add QR code generation
+Analytics accuracy
 
-Implement user authentication for custom URLs
+Concurrency/multiple requests
 
-🧑‍💻 Author
-Kunal Rathore
+Input validations and all documented errors
 
-📜 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+# Notes
+No database is used; everything is in-memory and resets on restart.
+
+All key requirements (validation, code generation, thread-safety, error handling, test coverage) are met.
+
+No authentication, UI, or custom user codes.
